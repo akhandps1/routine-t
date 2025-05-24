@@ -11,16 +11,19 @@
             margin: 0;
             padding: 20px;
             text-align: center;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
         h1.title {
             color: #4a148c;
-            font-size: 2.5em;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
             margin-bottom: 10px;
         }
         .motivation {
             color: #6a1b9a;
             font-style: italic;
             margin-bottom: 20px;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
         }
         .day {
             background-color: #f3e5f5;
@@ -28,11 +31,16 @@
             padding: 15px;
             margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
         }
         .day h2 {
             color: #6a1b9a;
             margin: 0;
             cursor: pointer;
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
         }
         .day-content {
             display: none;
@@ -47,16 +55,21 @@
         .task-item {
             display: flex;
             align-items: center;
-            margin: 5px 0;
+            margin: 10px 0;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .task-item input[type="checkbox"] {
             margin-right: 10px;
+            width: 20px;
+            height: 20px;
         }
         .task-name {
             flex-grow: 1;
             border: none;
             background: transparent;
-            font-size: 16px;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            min-width: 150px;
         }
         .task-name:focus {
             outline: none;
@@ -68,14 +81,16 @@
             padding: 5px;
             border: 1px solid #ccc;
             border-radius: 5px;
+            font-size: clamp(0.85rem, 2.5vw, 0.95rem);
         }
-        .delete-btn, .delete-day-btn {
+        .delete-btn, .delete-day-btn, .delete-image-btn {
             background-color: #ef5350;
             color: white;
             border: none;
             padding: 5px 10px;
             border-radius: 5px;
             cursor: pointer;
+            font-size: clamp(0.8rem, 2.5vw, 0.9rem);
         }
         .add-task-btn, .add-day-btn {
             background-color: #6a1b9a;
@@ -84,10 +99,12 @@
             padding: 5px 10px;
             border-radius: 5px;
             cursor: pointer;
-            margin: 5px 0;
+            margin: 5px;
+            font-size: clamp(0.8rem, 2.5vw, 0.9rem);
         }
         .progress {
             margin-top: 10px;
+            font-size: clamp(0.9rem, 3vw, 1rem);
         }
         .progress-bar {
             width: 100%;
@@ -101,17 +118,62 @@
             width: 0%;
             transition: width 0.3s;
         }
-        .add-day-container, .add-task-container {
+        .add-day-container, .add-task-container, .image-upload-container {
             margin-bottom: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-        .add-day-container input, .add-task-container input {
+        .add-day-container input, .add-task-container input, .image-upload-container input {
             margin-right: 10px;
             padding: 5px;
             border: 1px solid #ccc;
             border-radius: 5px;
+            font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+            width: clamp(120px, 30vw, 200px);
+        }
+        .daily-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .daily-quote {
+            margin: 10px 0;
+            font-style: italic;
+            color: #4a148c;
+            font-size: clamp(0.9rem, 3vw, 1rem);
+        }
+        /* Mobile-specific styles */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .day {
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+            .task-item, .add-day-container, .add-task-container, .image-upload-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .task-name, .task-duration, .add-day-container input, .add-task-container input, .image-upload-container input {
+                width: 100%;
+                margin-right: 0;
+            }
+            .delete-btn, .delete-day-btn, .delete-image-btn, .add-task-btn, .add-day-btn {
+                width: 100%;
+                padding: 8px;
+            }
+            .daily-image {
+                max-width: 100%;
+            }
         }
     </style>
 </head>
@@ -125,6 +187,20 @@
     <div id="tracker"></div>
 
     <script>
+        // Motivational quotes related to placement, DSA, and React
+        const quotes = [
+            "Master DSA, and every coding interview becomes a puzzle you can solve!",
+            "Your next big placement is just one LeetCode problem away—keep grinding!",
+            "React builds interfaces, but your persistence builds your future.",
+            "Every DSA problem you solve is a step closer to your dream tech job.",
+            "Code clean, dream big—React and DSA are your tools for success!",
+            "Placements reward those who practice, not those who procrastinate.",
+            "A strong DSA foundation turns coding interviews into opportunities.",
+            "Build components with React, build confidence with practice.",
+            "The key to cracking placements? Consistent DSA practice and a positive mindset.",
+            "React to challenges with code, conquer them with DSA mastery!"
+        ];
+
         // Default data for a CSE student's routine
         const defaultDays = [
             { 
@@ -134,7 +210,9 @@
                     { name: "Study Data Structures - Arrays", duration: "2 hours", completed: false },
                     { name: "Practice LeetCode Problems", duration: "1.5 hours", completed: false },
                     { name: "Read OS Concepts", duration: "1 hour", completed: false }
-                ]
+                ],
+                image: null,
+                quote: quotes[Math.floor(Math.random() * quotes.length)]
             },
             { 
                 date: "2025-05-26", 
@@ -142,7 +220,9 @@
                 tasks: [
                     { name: "Learn DBMS Queries", duration: "2 hours", completed: false },
                     { name: "Work on Project Milestone", duration: "3 hours", completed: false }
-                ]
+                ],
+                image: null,
+                quote: quotes[Math.floor(Math.random() * quotes.length)]
             }
         ];
 
@@ -151,9 +231,11 @@
         try {
             const savedData = localStorage.getItem('routineTracker');
             const parsedData = savedData ? JSON.parse(savedData) : defaultDays;
-            // Ensure parsedData is an array and contains valid day objects
             days = Array.isArray(parsedData) && parsedData.every(day => day.date && Array.isArray(day.tasks)) 
-                ? parsedData 
+                ? parsedData.map(day => ({
+                    ...day,
+                    quote: day.quote || quotes[Math.floor(Math.random() * quotes.length)]
+                }))
                 : defaultDays;
         } catch (e) {
             console.error('Error loading from localStorage:', e);
@@ -162,7 +244,6 @@
 
         function saveToLocalStorage() {
             try {
-                // Ensure days is an array before saving
                 if (!Array.isArray(days)) {
                     console.error('Days is not an array, resetting to default');
                     days = defaultDays;
@@ -176,13 +257,12 @@
         function renderTracker() {
             const tracker = document.getElementById('tracker');
             tracker.innerHTML = '';
-            // Ensure days is an array before sorting
             if (!Array.isArray(days)) {
                 console.error('Days is not an array, resetting to default');
                 days = defaultDays;
                 saveToLocalStorage();
             }
-            days.sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort by date
+            days.sort((a, b) => new Date(a.date) - new Date(b.date));
             days.forEach((day, dayIndex) => {
                 const totalTasks = day.tasks.length;
                 const completedTasks = day.tasks.filter(task => task.completed).length;
@@ -194,6 +274,7 @@
                     <div class="progress">Progress: <span>${progress.toFixed(0)}%</span></div>
                     <div class="progress-bar"><div class="progress-fill" style="width: ${progress}%"></div></div>
                     <div id="day-${dayIndex}" class="day-content ${day.isOpen ? 'show' : ''}">
+                        <div class="daily-quote">${day.quote}</div>
                         <div class="add-task-container">
                             <input type="text" id="new-task-${dayIndex}" placeholder="Enter task name">
                             <input type="text" id="new-task-duration-${dayIndex}" placeholder="Duration (e.g., 2 hours)">
@@ -210,6 +291,11 @@
                                 </div>
                             `).join('')}
                         </div>
+                        <div class="image-upload-container">
+                            <input type="file" id="image-upload-${dayIndex}" accept="image/*" onchange="uploadImage(${dayIndex}, this)">
+                            ${day.image ? `<button class="delete-image-btn" onclick="deleteImage(${dayIndex})">Delete Image</button>` : ''}
+                        </div>
+                        ${day.image ? `<img src="${day.image}" class="daily-image" alt="Daily Image for ${day.date}">` : ''}
                         <button class="delete-day-btn" onclick="deleteDay(${dayIndex})">Delete Day</button>
                     </div>
                 `;
@@ -228,8 +314,14 @@
             const date = input.value.trim();
             if (date) {
                 if (!days.some(day => day.date === date)) {
-                    days.push({ date, isOpen: true, tasks: [] });
-                    input.value = ''; // Clear input
+                    days.push({ 
+                        date, 
+                        isOpen: true, 
+                        tasks: [], 
+                        image: null, 
+                        quote: quotes[Math.floor(Math.random() * quotes.length)] 
+                    });
+                    input.value = '';
                     saveToLocalStorage();
                     renderTracker();
                 } else {
@@ -253,8 +345,8 @@
             const duration = durationInput.value.trim();
             if (name && duration) {
                 days[dayIndex].tasks.push({ name, duration, completed: false });
-                days[dayIndex].isOpen = true; // Ensure day stays open
-                nameInput.value = ''; // Clear inputs
+                days[dayIndex].isOpen = true;
+                nameInput.value = '';
                 durationInput.value = '';
                 saveToLocalStorage();
                 renderTracker();
@@ -265,33 +357,59 @@
 
         function deleteTask(dayIndex, taskIndex) {
             days[dayIndex].tasks.splice(taskIndex, 1);
-            days[dayIndex].isOpen = true; // Ensure day stays open
+            days[dayIndex].isOpen = true;
             saveToLocalStorage();
             renderTracker();
         }
 
         function updateTask(dayIndex, taskIndex, value) {
             days[dayIndex].tasks[taskIndex].name = value.trim() || `Task ${taskIndex + 1}`;
-            days[dayIndex].isOpen = true; // Ensure day stays open
+            days[dayIndex].isOpen = true;
             saveToLocalStorage();
             renderTracker();
         }
 
         function updateTaskDuration(dayIndex, taskIndex, value) {
             days[dayIndex].tasks[taskIndex].duration = value.trim() || "1 hour";
-            days[dayIndex].isOpen = true; // Ensure day stays open
+            days[dayIndex].isOpen = true;
             saveToLocalStorage();
             renderTracker();
         }
 
         function updateProgress(dayIndex, taskIndex, isChecked) {
             days[dayIndex].tasks[taskIndex].completed = isChecked;
-            days[dayIndex].isOpen = true; // Ensure day stays open
+            days[dayIndex].isOpen = true;
             saveToLocalStorage();
             renderTracker();
         }
 
-        // Initial render
+        function uploadImage(dayIndex, input) {
+            const file = input.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Format date as dd-mm-yyyy
+                    const date = days[dayIndex].date;
+                    const [yyyy, mm, dd] = date.split('-');
+                    const formattedDate = `${dd}-${mm}-${yyyy}`;
+                    days[dayIndex].image = e.target.result; // Store Base64 string
+                    days[dayIndex].isOpen = true;
+                    saveToLocalStorage();
+                    renderTracker();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert("Please upload a valid image file (PNG, JPEG, etc.)");
+            }
+        }
+
+        function deleteImage(dayIndex) {
+            days[dayIndex].image = null;
+            days[dayIndex].isOpen = true;
+            saveToLocalStorage();
+            renderTracker();
+        }
+
         renderTracker();
     </script>
 </body>
