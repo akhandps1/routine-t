@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSE Student Aspirant Routine Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e8f5e9;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1.title {
+            color: #4a148c;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .motivation {
+            color: #6a1b9a;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+        .day {
+            background-color: #f3e5f5;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .day h2 {
+            color: #6a1b9a;
+            margin: 0;
+            cursor: pointer;
+        }
+        .day-content {
+            display: none;
+            margin-top: 10px;
+        }
+        .day-content.show {
+            display: block;
+        }
+        .task-list {
+            margin: 10px 0;
+        }
+        .task-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        .task-item input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        .task-name {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+        }
+        .task-name:focus {
+            outline: none;
+            border-bottom: 1px solid #6a1b9a;
+        }
+        .task-duration {
+            width: 100px;
+            margin-right: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .delete-btn, .delete-day-btn {
+            background-color: #ef5350;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .add-task-btn, .add-day-btn {
+            background-color: #6a1b9a;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+        .progress {
+            margin-top: 10px;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 10px;
+            background-color: #f06292;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .add-day-container, .add-task-container {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .add-day-container input, .add-task-container input {
+            margin-right: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">CSE Student Aspirant Routine Tracker</h1>
+    <p class="motivation">"Code your dreams into reality, one task at a time!"</p>
+    <div class="add-day-container">
+        <input type="date" id="new-day-date">
+        <button class="add-day-btn" onclick="addDay()">Add Day</button>
+    </div>
+    <div id="tracker"></div>
+
+    <script>
+        // Default data for a CSE student's routine
+        const defaultDays = [
+            { 
+                date: "2025-05-25", 
+                isOpen: false,
+                tasks: [
+                    { name: "Study Data Structures - Arrays", duration: "2 hours", completed: false },
+                    { name: "Practice LeetCode Problems", duration: "1.5 hours", completed: false },
+                    { name: "Read OS Concepts", duration: "1 hour", completed: false }
+                ]
+            },
+            { 
+                date: "2025-05-26", 
+                isOpen: false,
+                tasks: [
+                    { name: "Learn DBMS Queries", duration: "2 hours", completed: false },
+                    { name: "Work on Project Milestone", duration: "3 hours", completed: false }
+                ]
+            }
+        ];
+
+        // Load days from localStorage or use default
+        let days = [];
+        try {
+            const savedData = localStorage.getItem('routineTracker');
+            const parsedData = savedData ? JSON.parse(savedData) : defaultDays;
+            // Ensure parsedData is an array and contains valid day objects
+            days = Array.isArray(parsedData) && parsedData.every(day => day.date && Array.isArray(day.tasks)) 
+                ? parsedData 
+                : defaultDays;
+        } catch (e) {
+            console.error('Error loading from localStorage:', e);
+            days = defaultDays;
+        }
+
+        function saveToLocalStorage() {
+            try {
+                // Ensure days is an array before saving
+                if (!Array.isArray(days)) {
+                    console.error('Days is not an array, resetting to default');
+                    days = defaultDays;
+                }
+                localStorage.setItem('routineTracker', JSON.stringify(days));
+            } catch (e) {
+                console.error('Error saving to localStorage:', e);
+            }
+        }
+
+        function renderTracker() {
+            const tracker = document.getElementById('tracker');
+            tracker.innerHTML = '';
+            // Ensure days is an array before sorting
+            if (!Array.isArray(days)) {
+                console.error('Days is not an array, resetting to default');
+                days = defaultDays;
+                saveToLocalStorage();
+            }
+            days.sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort by date
+            days.forEach((day, dayIndex) => {
+                const totalTasks = day.tasks.length;
+                const completedTasks = day.tasks.filter(task => task.completed).length;
+                const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day';
+                dayDiv.innerHTML = `
+                    <h2 onclick="toggleDay(${dayIndex})">${day.date}</h2>
+                    <div class="progress">Progress: <span>${progress.toFixed(0)}%</span></div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: ${progress}%"></div></div>
+                    <div id="day-${dayIndex}" class="day-content ${day.isOpen ? 'show' : ''}">
+                        <div class="add-task-container">
+                            <input type="text" id="new-task-${dayIndex}" placeholder="Enter task name">
+                            <input type="text" id="new-task-duration-${dayIndex}" placeholder="Duration (e.g., 2 hours)">
+                            <button class="add-task-btn" onclick="addTask(${dayIndex})">Add Task</button>
+                        </div>
+                        <div class="task-list" id="tasks-${dayIndex}">
+                            ${day.tasks.map((task, taskIndex) => `
+                                <div class="task-item">
+                                    <input type="checkbox" data-day="${dayIndex}" data-task="${taskIndex}" 
+                                        ${task.completed ? 'checked' : ''} onchange="updateProgress(${dayIndex}, ${taskIndex}, this.checked)">
+                                    <input type="text" class="task-name" value="${task.name}" onblur="updateTask(${dayIndex}, ${taskIndex}, this.value)">
+                                    <input type="text" class="task-duration" value="${task.duration}" onblur="updateTaskDuration(${dayIndex}, ${taskIndex}, this.value)">
+                                    <button class="delete-btn" onclick="deleteTask(${dayIndex}, ${taskIndex})">Delete</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="delete-day-btn" onclick="deleteDay(${dayIndex})">Delete Day</button>
+                    </div>
+                `;
+                tracker.appendChild(dayDiv);
+            });
+        }
+
+        function toggleDay(dayIndex) {
+            days[dayIndex].isOpen = !days[dayIndex].isOpen;
+            saveToLocalStorage();
+            renderTracker();
+        }
+
+        function addDay() {
+            const input = document.getElementById('new-day-date');
+            const date = input.value.trim();
+            if (date) {
+                if (!days.some(day => day.date === date)) {
+                    days.push({ date, isOpen: true, tasks: [] });
+                    input.value = ''; // Clear input
+                    saveToLocalStorage();
+                    renderTracker();
+                } else {
+                    alert("This date already exists!");
+                }
+            } else {
+                alert("Please select a date!");
+            }
+        }
+
+        function deleteDay(dayIndex) {
+            days.splice(dayIndex, 1);
+            saveToLocalStorage();
+            renderTracker();
+        }
+
+        function addTask(dayIndex) {
+            const nameInput = document.getElementById(`new-task-${dayIndex}`);
+            const durationInput = document.getElementById(`new-task-duration-${dayIndex}`);
+            const name = nameInput.value.trim();
+            const duration = durationInput.value.trim();
+            if (name && duration) {
+                days[dayIndex].tasks.push({ name, duration, completed: false });
+                days[dayIndex].isOpen = true; // Ensure day stays open
+                nameInput.value = ''; // Clear inputs
+                durationInput.value = '';
+                saveToLocalStorage();
+                renderTracker();
+            } else {
+                alert("Task name and duration cannot be empty!");
+            }
+        }
+
+        function deleteTask(dayIndex, taskIndex) {
+            days[dayIndex].tasks.splice(taskIndex, 1);
+            days[dayIndex].isOpen = true; // Ensure day stays open
+            saveToLocalStorage();
+            renderTracker();
+        }
+
+        function updateTask(dayIndex, taskIndex, value) {
+            days[dayIndex].tasks[taskIndex].name = value.trim() || `Task ${taskIndex + 1}`;
+            days[dayIndex].isOpen = true; // Ensure day stays open
+            saveToLocalStorage();
+            renderTracker();
+        }
+
+        function updateTaskDuration(dayIndex, taskIndex, value) {
+            days[dayIndex].tasks[taskIndex].duration = value.trim() || "1 hour";
+            days[dayIndex].isOpen = true; // Ensure day stays open
+            saveToLocalStorage();
+            renderTracker();
+        }
+
+        function updateProgress(dayIndex, taskIndex, isChecked) {
+            days[dayIndex].tasks[taskIndex].completed = isChecked;
+            days[dayIndex].isOpen = true; // Ensure day stays open
+            saveToLocalStorage();
+            renderTracker();
+        }
+
+        // Initial render
+        renderTracker();
+    </script>
+</body>
+</html>
